@@ -1,6 +1,7 @@
-import axios from 'axios'
+import axios from 'axios';
 
-const ENDPOINT = '/api/v2'
+const protocol = { 'https:': require('https'), 'http:': require('http') };
+const ENDPOINT = '/api/v2';
 
 /**
  * Login to qBittorrent
@@ -9,33 +10,33 @@ const ENDPOINT = '/api/v2'
  * @param {string} password - Password used to access the WebUI
  */
 const connect = async (host, username, password) => {
-  const hostname = new URL(host)
+  const hostname = new URL(host);
   const options = {
     baseURL: host,
     hostname: hostname.hostname,
     protocol: hostname.protocol,
-    port: parseInt(hostname.port) || (hostname.protocol == 'https:' ? 443 : 80)
-  }
+    port: parseInt(hostname.port) || (hostname.protocol == 'https:' ? 443 : 80),
+  };
 
   try {
     const { cookie } = await performRequest(options, null, '/auth/login', {
       username: username,
-      password: password
-    })
+      password: password,
+    });
     return {
       /**
        * Get application version
        * @return {Promise<string>} The response is a string with the application version, e.g. v4.1.3
        */
       appVersion: async () => {
-        return await appVersion(options, cookie)
+        return await appVersion(options, cookie);
       },
       /**
        * Get API version
        * @return {Promise<string>} The response is a string with the WebAPI version, e.g. 2.0
        */
       apiVersion: async () => {
-        return await apiVersion(options, cookie)
+        return await apiVersion(options, cookie);
       },
       /**
        * @typedef {Object} BuildInfo
@@ -50,13 +51,13 @@ const connect = async (host, username, password) => {
        * @return {Promise<BuildInfo>} Object containing build info
        */
       buildInfo: async () => {
-        return await buildInfo(options, cookie)
+        return await buildInfo(options, cookie);
       },
       /**
        * Shutdown application
        */
       shutdown: async () => {
-        await shutdown(options, cookie)
+        await shutdown(options, cookie);
       },
       /**
        * @typedef {Object} Preferences
@@ -167,14 +168,14 @@ const connect = async (host, username, password) => {
        * @return {Promise<Preferences>} Object containing the application's settings
        */
       preferences: async () => {
-        return await preferences(options, cookie)
+        return await preferences(options, cookie);
       },
       /**
        * Get default save path
        * @return {Promise<string>} Default save path, e.g. C:/Users/Dayman/Downloads
        */
       defaultSavePath: async () => {
-        return await defaultSavePath(options, cookie)
+        return await defaultSavePath(options, cookie);
       },
       /**
        * @typedef {Object} Log
@@ -193,7 +194,15 @@ const connect = async (host, username, password) => {
        * @return {Promise<Log[]>} Logs
        */
       log: async (normal, info, warning, critical, lastKnownId) => {
-        return await log(options, cookie, normal, info, warning, critical, lastKnownId)
+        return await log(
+          options,
+          cookie,
+          normal,
+          info,
+          warning,
+          critical,
+          lastKnownId,
+        );
       },
       /**
        * @typedef {Object} PeerLog
@@ -209,7 +218,7 @@ const connect = async (host, username, password) => {
        * @return {Promise<PeerLog[]>} Peer logs
        */
       peerLog: async (lastKnownId) => {
-        return await peerLog(options, cookie, lastKnownId)
+        return await peerLog(options, cookie, lastKnownId);
       },
       /**
        * @typedef {Object} MainData
@@ -229,7 +238,7 @@ const connect = async (host, username, password) => {
        * @return {Promise<MainData>} Main data
        */
       syncMainData: async (rid) => {
-        return await syncMainData(options, cookie, rid)
+        return await syncMainData(options, cookie, rid);
       },
       /**
        * Get torrent peers data
@@ -238,7 +247,7 @@ const connect = async (host, username, password) => {
        * @return {Promise<PeerData>} Peer data
        */
       syncPeersData: async (hash, rid) => {
-        return await syncPeersData(options, cookie, hash, rid)
+        return await syncPeersData(options, cookie, hash, rid);
       },
       /**
        * @typedef {Object} TransferInfo
@@ -256,55 +265,55 @@ const connect = async (host, username, password) => {
        * @return {Promise<TransferInfo>} Transfer info
        */
       transferInfo: async () => {
-        return await transferInfo(options, cookie)
+        return await transferInfo(options, cookie);
       },
       /**
        * Get alternative speed limits state
        * @return {Promise<number>} The response is 1 if alternative speed limits are enabled, 0 otherwise
        */
       speedLimitsMode: async () => {
-        return await speedLimitsMode(options, cookie)
+        return await speedLimitsMode(options, cookie);
       },
       /**
        * Toggle alternative speed limits
        */
       toggleSpeedLimitsMode: async () => {
-        return await toggleSpeedLimitsMode(options, cookie)
+        return await toggleSpeedLimitsMode(options, cookie);
       },
       /**
        * Get global download limit
        * @return {Promise<number>} Current global download speed limit in bytes/second; this value will be zero if no limit is applied
        */
       globalDownloadLimit: async () => {
-        return await globalDownloadLimit(options, cookie)
+        return await globalDownloadLimit(options, cookie);
       },
       /**
        * Set global download limit
        * @param {number} limit - The global download speed limit to set in bytes/second
        */
       setGlobalDownloadLimit: async (limit) => {
-        return await setGlobalDownloadLimit(options, cookie, limit)
+        return await setGlobalDownloadLimit(options, cookie, limit);
       },
       /**
        * Get global upload limit
        * @return {Promise<number>} Current global upload speed limit in bytes/second; this value will be zero if no limit is applied
        */
       globalUploadLimit: async () => {
-        return await globalUploadLimit(options, cookie)
+        return await globalUploadLimit(options, cookie);
       },
       /**
        * Set global upload limit
        * @param {number} limit - The global upload speed limit to set in bytes/second
        */
       setGlobalUploadLimit: async (limit) => {
-        return await setGlobalUploadLimit(options, cookie, limit)
+        return await setGlobalUploadLimit(options, cookie, limit);
       },
       /**
        * Ban peers
        * @param {string} peers - The peer to ban, or multiple peers separated by a pipe `|`. Each peer is a colon-separated `host:port`
        */
       banPeers: async (peers) => {
-        return await banPeers(options, cookie, peers)
+        return await banPeers(options, cookie, peers);
       },
       /**
        * @typedef {Object} Torrent
@@ -362,7 +371,15 @@ const connect = async (host, username, password) => {
        * @param {string} hashes - Filter by hashes. Can contain multiple hashes separated by |
        * @return {Promise<Torrent[]>} Torrents
        */
-      torrents: async (filter, category, sort, reverse, limit, offset, hashes) => {
+      torrents: async (
+        filter?,
+        category?,
+        sort?,
+        reverse?,
+        limit?,
+        offset?,
+        hashes?,
+      ) => {
         return await torrents(
           options,
           cookie,
@@ -372,8 +389,8 @@ const connect = async (host, username, password) => {
           reverse,
           limit,
           offset,
-          hashes
-        )
+          hashes,
+        );
       },
       /**
        * @typedef {Object} TorrentInfo
@@ -417,7 +434,7 @@ const connect = async (host, username, password) => {
        * @return {Promise<TorrentInfo>} Torrent properties
        */
       properties: async (hash) => {
-        return await properties(options, cookie, hash)
+        return await properties(options, cookie, hash);
       },
       /**
        * @typedef {Object} Tracker
@@ -436,7 +453,7 @@ const connect = async (host, username, password) => {
        * @return {Promise<Tracker[]>} Torrent trackers
        */
       trackers: async (hash) => {
-        return await trackers(options, cookie, hash)
+        return await trackers(options, cookie, hash);
       },
       /**
        * @typedef {Object} Webseed
@@ -448,7 +465,7 @@ const connect = async (host, username, password) => {
        * @return {Promise<Webseed[]>} Torrent webseeds
        */
       webseeds: async (hash) => {
-        return await webseeds(options, cookie, hash)
+        return await webseeds(options, cookie, hash);
       },
       /**
        * @typedef {Object} Content
@@ -466,7 +483,7 @@ const connect = async (host, username, password) => {
        * @return {Promise<Content[]>} Torrent contents
        */
       files: async (hash) => {
-        return await files(options, cookie, hash)
+        return await files(options, cookie, hash);
       },
       /**
        * Get torrent pieces' states
@@ -474,7 +491,7 @@ const connect = async (host, username, password) => {
        * @return {Promise<(0|1|2)[]>} States (integers) of all pieces (in order) of the torrent
        */
       pieceStates: async (hash) => {
-        return await pieceStates(options, cookie, hash)
+        return await pieceStates(options, cookie, hash);
       },
       /**
        * Get torrent pieces' hashes
@@ -482,21 +499,21 @@ const connect = async (host, username, password) => {
        * @return {Promise<string[]>} Hashes (strings) of all pieces (in order) of the torrent
        */
       pieceHashes: async (hash) => {
-        return await pieceHashes(options, cookie, hash)
+        return await pieceHashes(options, cookie, hash);
       },
       /**
        * Pause one or several torrents
        * @param {string} hashes - The hashes of the torrents you want to pause. It can contain multiple hashes separated by |, to pause multiple torrents, or set to 'all', to pause all torrents
        */
       pauseTorrents: async (hashes) => {
-        return await pauseTorrents(options, cookie, hashes)
+        return await pauseTorrents(options, cookie, hashes);
       },
       /**
        * Resume one or several torrents
        * @param {string} hashes - The hashes of the torrents you want to resume. It can contain multiple hashes separated by |, to resume multiple torrents, or set to 'all', to resume all torrents
        */
       resumeTorrents: async (hashes) => {
-        return await resumeTorrents(options, cookie, hashes)
+        return await resumeTorrents(options, cookie, hashes);
       },
       /**
        * Delete one or several torrents
@@ -504,21 +521,21 @@ const connect = async (host, username, password) => {
        * @param {boolean} deleteFile - If set to `true`, the downloaded data will also be deleted, otherwise has no effect
        */
       deleteTorrents: async (hashes, deleteFile) => {
-        return await deleteTorrents(options, cookie, hashes, deleteFile)
+        return await deleteTorrents(options, cookie, hashes, deleteFile);
       },
       /**
        * Recheck one or several torrents
        * @param {string} hashes - The hashes of the torrents you want to recheck. It can contain multiple hashes separated by |, to recheck multiple torrents, or set to 'all', to recheck all torrents
        */
       recheckTorrents: async (hashes) => {
-        return await recheckTorrents(options, cookie, hashes)
+        return await recheckTorrents(options, cookie, hashes);
       },
       /**
        * Reannounce one or several torrents
        * @param {string} hashes - The hashes of the torrents you want to reannounce. It can contain multiple hashes separated by |, to reannounce multiple torrents, or set to 'all', to reannounce all torrents
        */
       reannounceTorrents: async (hashes) => {
-        return await reannounceTorrents(options, cookie, hashes)
+        return await reannounceTorrents(options, cookie, hashes);
       },
       /**
        * Edit trackers
@@ -527,7 +544,7 @@ const connect = async (host, username, password) => {
        * @param {string} newUrl - The new URL to replace the `origUrl`
        */
       editTrackers: async (hash, origUrl, newUrl) => {
-        return await editTrackers(options, cookie, hash, origUrl, newUrl)
+        return await editTrackers(options, cookie, hash, origUrl, newUrl);
       },
       /**
        * Remove trackers
@@ -535,7 +552,7 @@ const connect = async (host, username, password) => {
        * @param {string} url - URLs to remove, separated by `|`
        */
       removeTrackers: async (hash, urls) => {
-        return await removeTrackers(options, cookie, hash, urls)
+        return await removeTrackers(options, cookie, hash, urls);
       },
       /**
        * Add peers
@@ -543,7 +560,7 @@ const connect = async (host, username, password) => {
        * @param {string} peers - The peer to add, or multiple peers separated by a pipe `|`. Each peer is a colon-separated `host:port`
        */
       addPeers: async (hashes, peers) => {
-        return await addPeers(options, cookie, hashes, peers)
+        return await addPeers(options, cookie, hashes, peers);
       },
       /**
        * Add new torrent
@@ -552,7 +569,7 @@ const connect = async (host, username, password) => {
        * @param {raw} torrents - Raw data of torrent file. torrents can be presented multiple times.
        */
       addNewTorrent: async (urls) => {
-        return await addNewTorrent(options, cookie, urls)
+        return await addNewTorrent(options, cookie, urls);
       },
       /**
        * Add feed
@@ -560,7 +577,15 @@ const connect = async (host, username, password) => {
        * @param {string} path - Raw data of torrent file. torrents can be presented multiple times.
        */
       addFeed: async (url, path) => {
-        return await addFeed(options, cookie, url, path)
+        return await addFeed(options, cookie, url, path);
+      },
+      /**
+       * Set auto-downloading rule
+       * @param {string} ruleName - Rule name (e.g. "Punisher")
+       * @param {string} ruleDef - JSON encoded rule definit
+       */
+      setRule: async (ruleName, ruleDef) => {
+        return await setRule(options, cookie, ruleName, ruleDef);
       },
       /**
        * Add trackers to torrent
@@ -568,35 +593,35 @@ const connect = async (host, username, password) => {
        * @param {string} urls - URLs of the trackers, separated by a newline `\n`
        */
       addTrackers: async (hash, urls) => {
-        return await addTrackers(options, cookie, hash, urls)
+        return await addTrackers(options, cookie, hash, urls);
       },
       /**
        * Increase torrent priority
        * @param {string} hashes - The hashes of the torrents you want to increase the priority of. It can contain multiple hashes separated by `|`, to increase the priority of multiple torrents, or set to 'all', to increase the priority of all torrents
        */
       increasePriority: async (hashes) => {
-        return await increasePriority(options, cookie, hashes)
+        return await increasePriority(options, cookie, hashes);
       },
       /**
        * Decrease torrent priority
        * @param {string} hashes - The hashes of the torrents you want to decrease the priority of. It can contain multiple hashes separated by `|`, to decrease the priority of multiple torrents, or set to 'all', to decrease the priority of all torrents
        */
       decreasePriority: async (hashes) => {
-        return await decreasePriority(options, cookie, hashes)
+        return await decreasePriority(options, cookie, hashes);
       },
       /**
        * Maximal torrent priority
        * @param {string} hashes - The hashes of the torrents you want to set to the maximum priority. It can contain multiple hashes separated by `|`, to set multiple torrents to the maximum priority, or set to 'all', to set all torrents to the maximum priority
        */
       maxPriority: async (hashes) => {
-        return await maxPriority(options, cookie, hashes)
+        return await maxPriority(options, cookie, hashes);
       },
       /**
        * Minimal torrent priority
        * @param {string} hashes - The hashes of the torrents you want to set to the minimum priority. It can contain multiple hashes separated by `|`, to set multiple torrents to the minimum priority, or set to 'all', to set all torrents to the minimum priority
        */
       minPriority: async (hashes) => {
-        return await minPriority(options, cookie, hashes)
+        return await minPriority(options, cookie, hashes);
       },
       /**
        * Set file priority
@@ -605,14 +630,14 @@ const connect = async (host, username, password) => {
        * @param {(0|1|6|7)} priority - File priority to set
        */
       setFilePriority: async (hash, id, priority) => {
-        return await setFilePriority(options, cookie, hash, id, priority)
+        return await setFilePriority(options, cookie, hash, id, priority);
       },
       /**
        * Get torrent download limit
        * @param {string} hashes - The hashes of the torrents. It can contain multiple hashes separated by `|` or set to 'all'
        */
       downloadLimit: async (hashes) => {
-        return await downloadLimit(options, cookie, hashes)
+        return await downloadLimit(options, cookie, hashes);
       },
       /**
        * Set torrent download limit
@@ -620,7 +645,7 @@ const connect = async (host, username, password) => {
        * @param {string} limit - Download speed limit in bytes per second you want to set
        */
       setDownloadLimit: async (hashes, limit) => {
-        return await setDownloadLimit(options, cookie, hashes, limit)
+        return await setDownloadLimit(options, cookie, hashes, limit);
       },
       /**
        * Set torrent share limit
@@ -629,14 +654,20 @@ const connect = async (host, username, password) => {
        * @param {string} seedingTimeLimit - Max amount of time the torrent should be seeded. `-2` means the global limit should be used, `-1` means no limit
        */
       setShareLimit: async (hashes, ratioLimit, seedingTimeLimit) => {
-        return await setShareLimit(options, cookie, ratioLimit, seedingTimeLimit)
+        return await setShareLimit(
+          options,
+          cookie,
+          hashes,
+          ratioLimit,
+          seedingTimeLimit,
+        );
       },
       /**
        * Get torrent upload limit
        * @param {string} hashes - The hashes of the torrents. It can contain multiple hashes separated by `|` or set to 'all'
        */
       uploadLimit: async (hashes) => {
-        return await uploadLimit(options, cookie, hashes)
+        return await uploadLimit(options, cookie, hashes);
       },
       /**
        * Set torrent upload limit
@@ -644,7 +675,7 @@ const connect = async (host, username, password) => {
        * @param {string} limit - Upload speed limit in bytes per second you want to set
        */
       setUploadLimit: async (hashes, limit) => {
-        return await setUploadLimit(options, cookie, hashes, limit)
+        return await setUploadLimit(options, cookie, hashes, limit);
       },
       /**
        * Set torrent location
@@ -652,7 +683,7 @@ const connect = async (host, username, password) => {
        * @param {string} location - Location to download the torrent to. If the location doesn't exist, the torrent's location is unchanged
        */
       setLocation: async (hashes, location) => {
-        return await setLocation(options, cookie, hashes, location)
+        return await setLocation(options, cookie, hashes, location);
       },
       /**
        * Set torrent name
@@ -660,7 +691,7 @@ const connect = async (host, username, password) => {
        * @param {string} name - New torrent name
        */
       rename: async (hash, name) => {
-        return await rename(hash, name)
+        return await rename(options, cookie, hash, name);
       },
       /**
        * Set torrent category
@@ -668,14 +699,14 @@ const connect = async (host, username, password) => {
        * @param {string} category - The torrent category you want to set
        */
       setCategory: async (hashes, category) => {
-        return await setCategory(options, cookie, hashes, category)
+        return await setCategory(options, cookie, hashes, category);
       },
       /**
        * Get all categories
        * @return {Promise<Categories>} Categories in JSON format
        */
       categories: async () => {
-        return await categories(options, cookie)
+        return await categories(options, cookie);
       },
       /**
        * Add new category
@@ -683,7 +714,7 @@ const connect = async (host, username, password) => {
        * @param {string} savePath - Save path of the category
        */
       createCategory: async (category, savePath) => {
-        return await createCategory(options, cookie, category, savePath)
+        return await createCategory(options, cookie, category, savePath);
       },
       /**
        * Edit category
@@ -691,14 +722,14 @@ const connect = async (host, username, password) => {
        * @param {string} savePath - Save path of the category
        */
       editCategory: async (category, savePath) => {
-        return await editCategory(options, cookie, category, savePath)
+        return await editCategory(options, cookie, category, savePath);
       },
       /**
        * Remove categories
        * @param {string} categories - Category you want to remove. It can contain multiple cateogies separated by a newline `\n`
        */
       removeCategories: async (categories) => {
-        return await removeCategories(options, cookie, categories)
+        return await removeCategories(options, cookie, categories);
       },
       /**
        * Add torrent tags
@@ -706,7 +737,7 @@ const connect = async (host, username, password) => {
        * @param {string} tags - The list of tags you want to add to passed torrents
        */
       addTags: async (hashes, tags) => {
-        return await addTags(options, cookie, hashes, tags)
+        return await addTags(options, cookie, hashes, tags);
       },
       /**
        * Remove torrent tags
@@ -714,28 +745,28 @@ const connect = async (host, username, password) => {
        * @param {string} tags - Category you want to remove. It can contain multiple cateogies separated by a newline `\n`
        */
       removeTags: async (hashes, tags) => {
-        return await removeTags(options, cookie, hashes, tags)
+        return await removeTags(options, cookie, hashes, tags);
       },
       /**
        * Get all tags
        * @return {Promise<string[]>} Tags
        */
       tags: async () => {
-        return await tags(options, cookie)
+        return await tags(options, cookie);
       },
       /**
        * Create tags
        * @param {string} tags - List of tags you want to create. Can contain multiple tags separated by `,`
        */
       createTags: async (tags) => {
-        return await createTags(options, cookie, tags)
+        return await createTags(options, cookie, tags);
       },
       /**
        * Delete tags
        * @param {string} tags - List of tags you want to delete. Can contain multiple tags separated by `,`
        */
       deleteTags: async (tags) => {
-        return await deleteTags(options, cookie, tags)
+        return await deleteTags(options, cookie, tags);
       },
       /**
        * Set automatic torrent management
@@ -743,21 +774,21 @@ const connect = async (host, username, password) => {
        * @param {boolean} enable - Enable automatic torrent management or not for the torrents listed in `hashes`
        */
       setAutoManagement: async (hashes, enable) => {
-        return await setAutoManagement(options, cookie, hashes, enable)
+        return await setAutoManagement(options, cookie, hashes, enable);
       },
       /**
        * Toggle sequential download
        * @param {string} hashes - The hashes of the torrents you want to toggle sequential download for. It can contain multiple hashes separated by `|`, to toggle sequential download for multiple torrents, or set to 'all', to toggle sequential download for all torrents
        */
       toggleSequentialDownload: async (hashes) => {
-        return await toggleSequentialDownload(options, cookie, hashes)
+        return await toggleSequentialDownload(options, cookie, hashes);
       },
       /**
        * Set first/last piece priority
        * @param {string} hashes - The hashes of the torrents you want to toggle the first/last piece priority for. It can contain multiple hashes separated by `|`, to toggle the first/last piece priority for multiple torrents, or set to 'all', to toggle the first/last piece priority for all torrents
        */
       toggleFirstLastPiecePrio: async (hashes) => {
-        return await toggleFirstLastPiecePrio(options, cookie, hashes)
+        return await toggleFirstLastPiecePrio(options, cookie, hashes);
       },
       /**
        * Set force start
@@ -765,7 +796,7 @@ const connect = async (host, username, password) => {
        * @param {boolean} value - Enable force start or not for the torrents listed in `hashes`
        */
       setForceStart: async (hashes, value) => {
-        return await setForceStart(options, cookie, hashes, value)
+        return await setForceStart(options, cookie, hashes, value);
       },
       /**
        * Set super seeding
@@ -773,7 +804,7 @@ const connect = async (host, username, password) => {
        * @param {boolean} value - Enable super seeding or not for the torrents listed in `hashes`
        */
       setSuperSeeding: async (hashes, value) => {
-        return await setSuperSeeding(options, cookie, hashes, value)
+        return await setSuperSeeding(options, cookie, hashes, value);
       },
       /**
        * Rename file
@@ -782,7 +813,7 @@ const connect = async (host, username, password) => {
        * @param {string} name - The new name to use for the file
        */
       renameFile: async (hash, id, name) => {
-        return await renameFile(options, cookie, hash, id, name)
+        return await renameFile(options, cookie, hash, id, name);
       },
       /**
        * @typedef {Object} SearchJob
@@ -796,14 +827,14 @@ const connect = async (host, username, password) => {
        * @return {Promise<SearchJob>} Search ID as JSON
        */
       startSearch: async (pattern, plugins, category) => {
-        return await startSearch(options, cookie, pattern, plugins, category)
+        return await startSearch(options, cookie, pattern, plugins, category);
       },
       /**
        * Stop search
        * @param {number} id - ID of the search job
        */
       stopSearch: async (id) => {
-        return await stopSearch(options, cookie, id)
+        return await stopSearch(options, cookie, id);
       },
       /**
        * @typedef {Object} SearchStatus
@@ -817,7 +848,7 @@ const connect = async (host, username, password) => {
        * @return {Promise<SearchStatus[]>} Status of the search jobs
        */
       searchStatus: async (id) => {
-        return await searchStatus(options, cookie, id)
+        return await searchStatus(options, cookie, id);
       },
       /**
        * @typedef {Object} SearchResult
@@ -843,14 +874,14 @@ const connect = async (host, username, password) => {
        * @return {Promise<SearchResults>} Search results
        */
       searchResults: async (id, limit, offset) => {
-        return await searchResults(options, cookie, id, limit, offset)
+        return await searchResults(options, cookie, id, limit, offset);
       },
       /**
        * Delete search
        * @param {number} id - ID of the search job
        */
       deleteSearch: async (id) => {
-        return await deleteSearch(options, cookie, id)
+        return await deleteSearch(options, cookie, id);
       },
       /**
        * Get search categories
@@ -858,7 +889,7 @@ const connect = async (host, username, password) => {
        * @return {Promise<string[]>} List of categories
        */
       searchCategories: async (pluginName) => {
-        return await searchCategories(options, cookie, pluginName)
+        return await searchCategories(options, cookie, pluginName);
       },
       /**
        * @typedef {Object} SearchPlugin
@@ -874,21 +905,21 @@ const connect = async (host, username, password) => {
        * @return {Promise<SearchPlugin[]>} List of plugins
        */
       searchPlugins: async () => {
-        return await searchPlugins(options, cookie)
+        return await searchPlugins(options, cookie);
       },
       /**
        * Install search plugin
        * @param {string} sources - Url or file path of the plugin to install. Supports multiple sources separated by `|`
        */
       installPlugin: async (sources) => {
-        return await installPlugin(options, cookie, sources)
+        return await installPlugin(options, cookie, sources);
       },
       /**
        * Uninstall search plugin
        * @param {string} names - Name of the plugin to uninstall (e.g. "legittorrents"). Supports multiple names separated by `|`
        */
       uninstallPlugin: async (names) => {
-        return await uninstallPlugin(options, cookie, names)
+        return await uninstallPlugin(options, cookie, names);
       },
       /**
        * Enable search plugin
@@ -896,52 +927,62 @@ const connect = async (host, username, password) => {
        * @param {boolean} enable - Whether the plugins should be enabled
        */
       enablePlugin: async (names, enable) => {
-        return await enablePlugin(options, cookie, names, enable)
+        return await enablePlugin(options, cookie, names, enable);
       },
       /**
        * Update search plugins
        */
       updatePlugins: async () => {
-        return await updatePlugins(options, cookie)
-      }
-    }
+        return await updatePlugins(options, cookie);
+      },
+    };
   } catch (err) {
-    console.error(err)
-    throw new Error(`Login failed with username: ${username}`)
+    console.error(err);
+    throw new Error(`Login failed with username: ${username}`);
   }
-}
+};
 
 // Application
 
 async function appVersion(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/app/version', {})
-  return res
+  const { res } = await performRequest(options, cookie, '/app/version', {});
+  return res;
 }
 
 async function apiVersion(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/app/webapiVersion', {})
-  return res
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/app/webapiVersion',
+    {},
+  );
+  return res;
 }
 
 async function buildInfo(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/app/buildInfo', {})
-  return JSON.parse(res)
+  const { res } = await performRequest(options, cookie, '/app/buildInfo', {});
+  return JSON.parse(res);
 }
 
 async function shutdown(options, cookie) {
-  await performRequest(options, cookie, '/app/shutdown', {})
+  await performRequest(options, cookie, '/app/shutdown', {});
 }
 
 async function preferences(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/app/preferences', {})
-  return JSON.parse(res)
+  const { res } = await performRequest(options, cookie, '/app/preferences', {});
+  return JSON.parse(res);
 }
 
 // TODO: setPreferences()
 
 async function defaultSavePath(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/app/defaultSavePath', {})
-  return res
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/app/defaultSavePath',
+    {},
+  );
+  return res;
 }
 
 // Log
@@ -953,426 +994,500 @@ async function log(
   info = true,
   warning = true,
   critical = true,
-  lastKnownId = -1
+  lastKnownId = -1,
 ) {
   const { res } = await performRequest(options, cookie, '/log/main', {
     normal: normal,
     info: info,
     warning: warning,
     critical: critical,
-    last_known_id: lastKnownId
-  })
-  return JSON.parse(res)
+    last_known_id: lastKnownId,
+  });
+  return JSON.parse(res);
 }
 
 async function peerLog(options, cookie, lastKnownId) {
   const { res } = await performRequest(options, cookie, '/log/peers', {
-    last_known_id: lastKnownId
-  })
-  return JSON.parse(res)
+    last_known_id: lastKnownId,
+  });
+  return JSON.parse(res);
 }
 
 // Sync
 
 async function syncMainData(options, cookie, rid) {
   const { res } = await performRequest(options, cookie, '/sync/maindata', {
-    rid: rid
-  })
-  return JSON.parse(res)
+    rid: rid,
+  });
+  return JSON.parse(res);
 }
 
 async function syncPeersData(options, cookie, hash, rid) {
   const { res } = await performRequest(options, cookie, '/sync/torrentPeers', {
     hash: hash,
-    rid: rid
-  })
-  return JSON.parse(res)
+    rid: rid,
+  });
+  return JSON.parse(res);
 }
 
 // Transfer info
 
 async function transferInfo(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/transfer/info', {})
-  return JSON.parse(res)
+  const { res } = await performRequest(options, cookie, '/transfer/info', {});
+  return JSON.parse(res);
 }
 
 async function speedLimitsMode(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/transfer/speedLimitsMode', {})
-  return res
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/transfer/speedLimitsMode',
+    {},
+  );
+  return res;
 }
 
 async function toggleSpeedLimitsMode(options, cookie) {
-  await performRequest(options, cookie, '/transfer/toggleSpeedLimitsMode', {})
-  return
+  await performRequest(options, cookie, '/transfer/toggleSpeedLimitsMode', {});
+  return;
 }
 
 async function globalDownloadLimit(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/transfer/downloadLimit', {})
-  return res
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/transfer/downloadLimit',
+    {},
+  );
+  return res;
 }
 
 async function setGlobalDownloadLimit(options, cookie, limit) {
   await performRequest(options, cookie, '/transfer/setDownloadLimit', {
-    limit: limit
-  })
-  return
+    limit: limit,
+  });
+  return;
 }
 
 async function globalUploadLimit(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/transfer/uploadLimit', {})
-  return res
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/transfer/uploadLimit',
+    {},
+  );
+  return res;
 }
 
 async function setGlobalUploadLimit(options, cookie, limit) {
   await performRequest(options, cookie, '/transfer/setUploadLimit', {
-    limit: limit
-  })
-  return
+    limit: limit,
+  });
+  return;
 }
 
 async function banPeers(options, cookie, peers) {
-  await performRequest(options, cookie, '/transfer/banPeers', { peers: peers })
-  return
+  await performRequest(options, cookie, '/transfer/banPeers', { peers: peers });
+  return;
 }
 
 // Torrent management
 
-async function torrents(options, cookie, filter, category, sort, reverse, limit, offset, hashes) {
-  var parameters = {}
-  if (filter) parameters.filter = filter
-  if (category) parameters.category = category
-  if (sort) parameters.sort = sort
-  if (reverse) parameters.reverse = reverse
-  if (limit) parameters.limit = limit
-  if (offset) parameters.offset = offset
-  if (hashes) parameters.hashes = hashes
+async function torrents(
+  options,
+  cookie,
+  filter,
+  category,
+  sort,
+  reverse,
+  limit,
+  offset,
+  hashes,
+) {
+  const parameters: any = {};
+  if (filter) parameters.filter = filter;
+  if (category) parameters.category = category;
+  if (sort) parameters.sort = sort;
+  if (reverse) parameters.reverse = reverse;
+  if (limit) parameters.limit = limit;
+  if (offset) parameters.offset = offset;
+  if (hashes) parameters.hashes = hashes;
 
-  const { res } = await performRequest(options, cookie, '/torrents/info', parameters)
-  return JSON.parse(res)
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/torrents/info',
+    parameters,
+  );
+  return JSON.parse(res);
 }
 
 async function properties(options, cookie, hash) {
-  const { res } = await performRequest(options, cookie, '/torrents/properties', { hash: hash })
-  return JSON.parse(res)
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/torrents/properties',
+    { hash: hash },
+  );
+  return JSON.parse(res);
 }
 
 async function trackers(options, cookie, hash) {
   const { res } = await performRequest(options, cookie, '/torrents/trackers', {
-    hash: hash
-  })
-  return JSON.parse(res)
+    hash: hash,
+  });
+  return JSON.parse(res);
 }
 
 async function webseeds(options, cookie, hash) {
   const { res } = await performRequest(options, cookie, '/torrents/webseeds', {
-    hash: hash
-  })
-  return JSON.parse(res)
+    hash: hash,
+  });
+  return JSON.parse(res);
 }
 
 async function files(options, cookie, hash) {
   const { res } = await performRequest(options, cookie, '/torrents/files', {
-    hash: hash
-  })
-  return JSON.parse(res)
+    hash: hash,
+  });
+  return JSON.parse(res);
 }
 
 async function pieceStates(options, cookie, hash) {
-  const { res } = await performRequest(options, cookie, '/torrents/pieceStates', { hash: hash })
-  return JSON.parse(res)
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/torrents/pieceStates',
+    { hash: hash },
+  );
+  return JSON.parse(res);
 }
 
 async function pieceHashes(options, cookie, hash) {
-  const { res } = await performRequest(options, cookie, '/torrents/pieceHashes', { hash: hash })
-  return JSON.parse(res)
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/torrents/pieceHashes',
+    { hash: hash },
+  );
+  return JSON.parse(res);
 }
 
 async function pauseTorrents(options, cookie, hashes) {
-  await performRequest(options, cookie, '/torrents/pause', { hashes: hashes })
-  return
+  await performRequest(options, cookie, '/torrents/pause', { hashes: hashes });
+  return;
 }
 
 async function resumeTorrents(options, cookie, hashes) {
-  await performRequest(options, cookie, '/torrents/resume', { hashes: hashes })
-  return
+  await performRequest(options, cookie, '/torrents/resume', { hashes: hashes });
+  return;
 }
 
 async function deleteTorrents(options, cookie, hashes, deleteFile) {
   await performRequest(options, cookie, '/torrents/delete', {
     hashes: hashes,
-    deleteFile: deleteFile
-  })
-  return
+    deleteFile: deleteFile,
+  });
+  return;
 }
 
 async function recheckTorrents(options, cookie, hashes) {
   await performRequest(options, cookie, '/torrents/recheck', {
-    hashes: hashes
-  })
-  return
+    hashes: hashes,
+  });
+  return;
 }
 
 async function reannounceTorrents(options, cookie, hashes) {
   await performRequest(options, cookie, '/torrents/reannounce', {
-    hashes: hashes
-  })
-  return
+    hashes: hashes,
+  });
+  return;
 }
 
 async function editTrackers(options, cookie, hash, origUrl, newUrl) {
   await performRequest(options, cookie, '/torrents/editTracker', {
     hash: hash,
     origUrl: origUrl,
-    newUrl: newUrl
-  })
-  return
+    newUrl: newUrl,
+  });
+  return;
 }
 
 async function removeTrackers(options, cookie, hash, urls) {
   await performRequest(options, cookie, '/torrents/removeTrackers', {
     hash: hash,
-    urls: urls
-  })
-  return
+    urls: urls,
+  });
+  return;
 }
 
 async function addPeers(options, cookie, hashes, peers) {
   await performRequest(options, cookie, '/torrents/addPeers', {
     hashes: hashes,
-    peers: peers
-  })
-  return
+    peers: peers,
+  });
+  return;
 }
 
+// 新增
 async function addNewTorrent(options, cookie, urls) {
-  await performRequest(options, cookie, '/torrents/add', {
-    urls: encodeURI(urls)
-  })
-  return
+  return await performRequest(options, cookie, '/torrents/add', {
+    urls: encodeURI(urls),
+  });
 }
 
+// 新增
 async function addFeed(options, cookie, url, path) {
-  await performRequest(options, cookie, '/rss/addFeed', {
+  return await performRequest(options, cookie, '/rss/addFeed', {
     url: encodeURIComponent(url),
-    path
-  })
-  return
+    path,
+  });
+}
+
+// 新增
+async function setRule(options, cookie, ruleName, ruleDef) {
+  return await performRequestAxios(options, cookie, '/rss/setRule', {
+    ruleName,
+    ruleDef: ruleDef,
+  });
 }
 
 async function addTrackers(options, cookie, hash, urls) {
   await performRequest(options, cookie, '/torrents/addTrackers', {
     hash: hash,
-    urls: encodeURI(urls)
-  })
-  return
+    urls: encodeURI(urls),
+  });
+  return;
 }
 
 async function increasePriority(options, cookie, hashes) {
   await performRequest(options, cookie, '/torrents/increasePrio', {
-    hashes: hashes
-  })
-  return
+    hashes: hashes,
+  });
+  return;
 }
 
 async function decreasePriority(options, cookie, hashes) {
   await performRequest(options, cookie, '/torrents/decreasePrio', {
-    hashes: hashes
-  })
-  return
+    hashes: hashes,
+  });
+  return;
 }
 
 async function maxPriority(options, cookie, hashes) {
   await performRequest(options, cookie, '/torrents/topPrio', {
-    hashes: hashes
-  })
-  return
+    hashes: hashes,
+  });
+  return;
 }
 
 async function minPriority(options, cookie, hashes) {
   await performRequest(options, cookie, '/torrents/bottomPrio', {
-    hashes: hashes
-  })
-  return
+    hashes: hashes,
+  });
+  return;
 }
 
 async function setFilePriority(options, cookie, hash, id, priority) {
   await performRequest(options, cookie, '/torrents/filePrio', {
     hash: hash,
     id: id,
-    priority: priority
-  })
-  return
+    priority: priority,
+  });
+  return;
 }
 
 async function downloadLimit(options, cookie, hashes) {
-  const { res } = await performRequest(options, cookie, '/torrents/downloadLimit', {
-    hashes: hashes
-  })
-  return JSON.parse(res)
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/torrents/downloadLimit',
+    {
+      hashes: hashes,
+    },
+  );
+  return JSON.parse(res);
 }
 
 async function setDownloadLimit(options, cookie, hashes, limit) {
   await performRequest(options, cookie, '/torrents/setDownloadLimit', {
     hashes: hashes,
-    limit: limit
-  })
-  return
+    limit: limit,
+  });
+  return;
 }
 
-async function setShareLimit(options, cookie, hashes, ratioLimit, seedingTimeLimit) {
+async function setShareLimit(
+  options,
+  cookie,
+  hashes,
+  ratioLimit,
+  seedingTimeLimit,
+) {
   await performRequest(options, cookie, '/torrents/setShareLimits', {
     hashes: hashes,
     ratioLimit: ratioLimit,
-    seedingTimeLimit: seedingTimeLimit
-  })
-  return
+    seedingTimeLimit: seedingTimeLimit,
+  });
+  return;
 }
 
 async function uploadLimit(options, cookie, hashes) {
-  const { res } = await performRequest(options, cookie, '/torrents/uploadLimit', { hashes: hashes })
-  return JSON.parse(res)
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/torrents/uploadLimit',
+    { hashes: hashes },
+  );
+  return JSON.parse(res);
 }
 
 async function setUploadLimit(options, cookie, hashes, limit) {
   await performRequest(options, cookie, '/torrents/setUploadLimit', {
     hashes: hashes,
-    limit: limit
-  })
-  return
+    limit: limit,
+  });
+  return;
 }
 
 async function setLocation(options, cookie, hashes, location) {
   await performRequest(options, cookie, '/torrents/setLocation', {
     hashes: hashes,
-    location: location
-  })
-  return
+    location: location,
+  });
+  return;
 }
 
 async function rename(options, cookie, hash, name) {
   await performRequest(options, cookie, '/torrents/rename', {
     hash: hash,
-    name: encodeURI(name)
-  })
-  return
+    name: encodeURI(name),
+  });
+  return;
 }
 
 async function setCategory(options, cookie, hash, category) {
   await performRequest(options, cookie, '/torrents/setCategory', {
     hash: hash,
-    category: encodeURI(category)
-  })
-  return
+    category: encodeURI(category),
+  });
+  return;
 }
 
 async function categories(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/torrents/categories', {})
-  return JSON.parse(res)
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/torrents/categories',
+    {},
+  );
+  return JSON.parse(res);
 }
 
 async function createCategory(options, cookie, category, savePath) {
   await performRequest(options, cookie, '/torrents/createCategory', {
     category: encodeURI(category),
-    savePath: savePath
-  })
-  return
+    savePath: savePath,
+  });
+  return;
 }
 
 async function editCategory(options, cookie, category, savePath) {
   await performRequest(options, cookie, '/torrents/editCategory', {
     category: encodeURI(category),
-    savePath: savePath
-  })
-  return
+    savePath: savePath,
+  });
+  return;
 }
 
 async function removeCategories(options, cookie, categories) {
   await performRequest(options, cookie, '/torrents/removeCategories', {
-    categories: encodeURI(categories)
-  })
-  return
+    categories: encodeURI(categories),
+  });
+  return;
 }
 
 async function addTags(options, cookie, hashes, tags) {
   await performRequest(options, cookie, '/torrents/addTags', {
     hashes: hashes,
-    tags: encodeURI(tags)
-  })
-  return
+    tags: encodeURI(tags),
+  });
+  return;
 }
 
 async function removeTags(options, cookie, hashes, tags) {
   await performRequest(options, cookie, '/torrents/removeTags', {
     hashes: hashes,
-    tags: encodeURI(tags)
-  })
-  return
+    tags: encodeURI(tags),
+  });
+  return;
 }
 
 async function tags(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/torrents/tags', {})
-  return JSON.parse(res)
+  const { res } = await performRequest(options, cookie, '/torrents/tags', {});
+  return JSON.parse(res);
 }
 
 async function createTags(options, cookie, tags) {
   await performRequest(options, cookie, '/torrents/createTags', {
-    tags: encodeURI(tags)
-  })
-  return
+    tags: encodeURI(tags),
+  });
+  return;
 }
 
 async function deleteTags(options, cookie, tags) {
   await performRequest(options, cookie, '/torrents/deleteTags', {
-    tags: encodeURI(tags)
-  })
-  return
+    tags: encodeURI(tags),
+  });
+  return;
 }
 
 async function setAutoManagement(options, cookie, hashes, enable) {
   await performRequest(options, cookie, '/torrents/setAutoManagement', {
     hashes: hashes,
-    enable: enable
-  })
-  return
+    enable: enable,
+  });
+  return;
 }
 
 async function toggleSequentialDownload(options, cookie, hashes) {
   await performRequest(options, cookie, '/torrents/toggleSequentialDownload', {
-    hashes: hashes
-  })
-  return
+    hashes: hashes,
+  });
+  return;
 }
 
 async function toggleFirstLastPiecePrio(options, cookie, hashes) {
   await performRequest(options, cookie, '/torrents/toggleFirstLastPiecePrio', {
-    hashes: hashes
-  })
-  return
+    hashes: hashes,
+  });
+  return;
 }
 
 async function setForceStart(options, cookie, hashes, value) {
   await performRequest(options, cookie, '/torrents/setForceStart', {
     hashes: hashes,
-    value: value
-  })
-  return
+    value: value,
+  });
+  return;
 }
 
 async function setSuperSeeding(options, cookie, hashes, value) {
   await performRequest(options, cookie, '/torrents/setSuperSeeding', {
     hashes: hashes,
-    value: value
-  })
-  return
+    value: value,
+  });
+  return;
 }
 
 async function renameFile(options, cookie, hash, id, name) {
   await performRequest(options, cookie, '/torrents/renameFile', {
     hash: hash,
     id: id,
-    name: encodeURI(name)
-  })
-  return
+    name: encodeURI(name),
+  });
+  return;
 }
 
 // Search
@@ -1381,154 +1496,176 @@ async function startSearch(options, cookie, pattern, plugins, category) {
   const { res } = await performRequest(options, cookie, '/search/start', {
     pattern: pattern,
     plugins: plugins,
-    category: category
-  })
-  return JSON.parse(res)
+    category: category,
+  });
+  return JSON.parse(res);
 }
 
 async function stopSearch(options, cookie, id) {
-  await performRequest(options, cookie, '/search/stop', { id: id })
-  return
+  await performRequest(options, cookie, '/search/stop', { id: id });
+  return;
 }
 
 async function searchStatus(options, cookie, id) {
-  var parameters = {}
-  if (id) parameters.id = id
+  const parameters: any = {};
+  if (id) parameters.id = id;
 
-  const { res } = await performRequest(options, cookie, '/search/status', parameters)
-  return JSON.parse(res)
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/search/status',
+    parameters,
+  );
+  return JSON.parse(res);
 }
 
 async function searchResults(options, cookie, id, limit, offset) {
-  var parameters = { id: id }
-  if (limit) parameters.limit = limit
-  if (offset) parameters.offset = offset
+  const parameters: any = { id: id };
+  if (limit) parameters.limit = limit;
+  if (offset) parameters.offset = offset;
 
-  const { res } = await performRequest(options, cookie, '/search/results', parameters)
-  return JSON.parse(res)
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/search/results',
+    parameters,
+  );
+  return JSON.parse(res);
 }
 
 async function deleteSearch(options, cookie, id) {
-  await performRequest(options, cookie, '/search/delete', { id: id })
-  return
+  await performRequest(options, cookie, '/search/delete', { id: id });
+  return;
 }
 
 async function searchCategories(options, cookie, pluginName) {
-  var parameters = {}
-  if (pluginName) parameters.pluginName = pluginName
+  const parameters: any = {};
+  if (pluginName) parameters.pluginName = pluginName;
 
-  const { res } = await performRequest(options, cookie, '/search/categories', parameters)
-  return JSON.parse(res)
+  const { res } = await performRequest(
+    options,
+    cookie,
+    '/search/categories',
+    parameters,
+  );
+  return JSON.parse(res);
 }
 
 async function searchPlugins(options, cookie) {
-  const { res } = await performRequest(options, cookie, '/search/plugins', {})
-  return JSON.parse(res)
+  const { res } = await performRequest(options, cookie, '/search/plugins', {});
+  return JSON.parse(res);
 }
 
 async function installPlugin(options, cookie, sources) {
   await performRequest(options, cookie, '/search/installPlugin', {
-    sources: sources
-  })
-  return
+    sources: sources,
+  });
+  return;
 }
 
 async function uninstallPlugin(options, cookie, names) {
   await performRequest(options, cookie, '/search/uninstallPlugin', {
-    names: names
-  })
-  return
+    names: names,
+  });
+  return;
 }
 
 async function enablePlugin(options, cookie, names, enable) {
   await performRequest(options, cookie, '/search/enablePlugin', {
     names: names,
-    enable: enable
-  })
-  return
+    enable: enable,
+  });
+  return;
 }
 
 async function updatePlugins(options, cookie) {
-  await performRequest(options, cookie, '/search/updatePlugins', {})
-  return
+  await performRequest(options, cookie, '/search/updatePlugins', {});
+  return;
 }
 
 // Utils functions
 
-function performRequest(opt, cookie, path, parameters) {
-  // const data = plainify(parameters)
+function performRequest(opt, cookie, path, parameters): any {
+  const data = plainify(parameters);
 
-  // const options = {
-  //   hostname: opt.hostname,
-  //   protocol: opt.protocol,
-  //   port: opt.port,
-  //   path: ENDPOINT + path,
-  //   method: 'POST',
-  //   headers: {
-  //     Referer:
-  //       opt.protocol +
-  //       '//' +
-  //       opt.hostname +
-  //       (opt.port != 80 || opt.port != 443 ? ':' + opt.port : ''),
-  //     Origin:
-  //       opt.protocol +
-  //       '//' +
-  //       opt.hostname +
-  //       (opt.port != 80 || opt.port != 443 ? ':' + opt.port : ''),
-  //     'Content-Type': 'application/x-www-form-urlencoded',
-  //     'Content-Length': data.length,
-  //     Cookie: cookie
-  //   }
-  // }
-
-  // return new Promise((resolve, reject) => {
-  //   const req = protocol[options.protocol].request(options, (res) => {
-  //     let data = []
-
-  //     res
-  //       .on('data', (chunk) => data.push(chunk))
-  //       .on('end', () => {
-  //         if (res.statusCode == 200) {
-  //           var c = null
-  //           if (res.headers['set-cookie'] != undefined) {
-  //             c = res.headers['set-cookie'][0]
-  //           }
-  //           resolve({ res: Buffer.concat(data).toString(), cookie: c })
-  //         } else {
-  //           const msg = `HTTP request error: ${res.statusCode}: ${Buffer.concat(data).toString()}`
-  //           reject(new Error(msg))
-  //         }
-  //       })
-  //   })
-
-  //   req.on('error', (err) => reject(err))
-
-  //   req.write(data)
-  //   req.end()
-  // })
-
-  axios.defaults.withCredentials = true //配置为true
-  const axiosInstance = axios.create({
-    baseURL: opt.baseURL,
+  const options = {
+    hostname: opt.hostname,
+    protocol: opt.protocol,
+    port: opt.port,
+    path: ENDPOINT + path,
+    method: 'POST',
     headers: {
-      'Content-Type': 'application/json',
-      'Account-Type': '0'
-    }
-  })
+      Referer:
+        opt.protocol +
+        '//' +
+        opt.hostname +
+        (opt.port != 80 || opt.port != 443 ? ':' + opt.port : ''),
+      Origin:
+        opt.protocol +
+        '//' +
+        opt.hostname +
+        (opt.port != 80 || opt.port != 443 ? ':' + opt.port : ''),
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'Content-Length': data.length,
+      Cookie: cookie,
+    },
+  };
 
-  return axiosInstance.post(ENDPOINT + path, parameters)
+  return new Promise((resolve, reject) => {
+    const req = protocol[options.protocol].request(options, (res) => {
+      const data = [];
+      res
+        .on('data', (chunk) => data.push(chunk))
+        .on('end', () => {
+          if (res.statusCode == 200) {
+            let c = null;
+            if (res.headers['set-cookie'] != undefined) {
+              c = res.headers['set-cookie'][0];
+            }
+            resolve({ res: Buffer.concat(data).toString(), cookie: c });
+          } else {
+            reject(new Error(`HTTP request error: ${res.statusCode}`));
+          }
+        });
+    });
+
+    req.on('error', (err) => reject(err));
+
+    console.log('data: ', data);
+    req.write(data);
+    req.end();
+  });
 }
 
-// /**
-//  * Convert a JSON object to plain text parameters for POST method
-//  * @param {Object} json - JSON object
-//  * @return {string} Plain text parameters
-//  */
-// function plainify(json) {
-//   let str = JSON.stringify(json)
-//   str = str.replace(/{([^}]*)}/g, '$1')
-//   str = str.replace(/"([^"]*)":"([^"]*)",?/g, '$1=$2&')
-//   return str
-// }
+function performRequestAxios(opt, cookie, path, parameters) {
+  console.log('path: ', path);
+  console.log('parameters: ', parameters);
 
-export default { connect }
+  // const axiosInstance = axios.create({
+  //   baseURL: opt.baseURL,
+  //   headers: {
+  //     'Content-Type': 'application/x-www-form-urlencoded',
+  //   },
+  // });
+
+  return axios.post(ENDPOINT + path, parameters, {
+    baseURL: opt.baseURL,
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+  });
+}
+
+/**
+ * Convert a JSON object to plain text parameters for POST method
+ * @param {Object} json - JSON object
+ * @return {string} Plain text parameters
+ */
+function plainify(json) {
+  let str = JSON.stringify(json);
+  str = str.replace(/{([^}]*)}/g, '$1');
+  str = str.replace(/"([^"]*)":"([^"]*)",?/g, '$1=$2&');
+  return str;
+}
+
+export default { connect };
