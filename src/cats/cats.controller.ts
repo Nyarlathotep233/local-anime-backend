@@ -13,7 +13,7 @@ export class CatsController {
   findAll(@Req() request: Request, @Res() response: Response): void {
     // return 'This action returns all cats';
     response.json({
-      message: 'This action returns all cats'
-    })
+      message: 'This action returns all cats',
+    });
   }
 }

@@ -1,8 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable no-console */
-// const api = require("qbittorrent-api-v2");
 import axios from 'axios';
-import api from './qbt';
+import api from './utils/qbt';
 const convert = require('xml-js');
 
 // local-anime-backend
@@ -11,8 +10,19 @@ const AUTO_START = false;
 
 export const addRssUrl = async (rssUrl: string) => {
   const qbt = await api.connect('http://127.0.0.1:8080', 'admin', 'adminadmin');
-  const torrents = await qbt.torrents();
-  console.log('torrents: ', torrents);
+
+  // 请求默认地址
+  let defaultSavePath = '';
+  try {
+    defaultSavePath = await qbt.defaultSavePath();
+    console.log('defaultSavePath: ', defaultSavePath);
+  } catch (error) {
+    console.log('请求默认地址 error: ', error);
+    return {
+      success: false,
+      errorInfo: error,
+    };
+  }
 
   // 新增RSS订阅
   try {
@@ -20,6 +30,10 @@ export const addRssUrl = async (rssUrl: string) => {
     console.log('新增RSS订阅: ', addFeed);
   } catch (error) {
     console.log('新增RSS订阅 error: ', error);
+    return {
+      success: false,
+      errorInfo: error,
+    };
   }
 
   // 获得RSS标题
@@ -31,6 +45,10 @@ export const addRssUrl = async (rssUrl: string) => {
     title = rssJson?.rss?.channel?.title?._text;
   } catch (error) {
     console.log('获得RSS标题 error: ', error);
+    return {
+      success: false,
+      errorInfo: error,
+    };
   }
   console.log('获得RSS标题: ', title);
 
@@ -50,7 +68,7 @@ export const addRssUrl = async (rssUrl: string) => {
         mustContain: '',
         mustNotContain: '',
         previouslyMatchedEpisodes: [],
-        savePath: `/Users/zhangzechao/Downloads/anime/${title}`,
+        savePath: `${defaultSavePath}/${title}`,
         smartFilter: false,
         torrentContentLayout: null,
         useRegex: false,
@@ -59,7 +77,11 @@ export const addRssUrl = async (rssUrl: string) => {
     console.log(`新增自动下载规则: ${res.statusText} ${res.data}`);
   } catch (error) {
     console.log('新增自动下载规则 error: ', error);
+    return {
+      success: false,
+      errorInfo: error,
+    };
   }
 
-  return true;
+  return { success: true };
 };

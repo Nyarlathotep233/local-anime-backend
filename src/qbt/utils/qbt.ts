@@ -1624,7 +1624,10 @@ function performRequest(opt, cookie, path, parameters): any {
             }
             resolve({ res: Buffer.concat(data).toString(), cookie: c });
           } else {
-            reject(new Error(`HTTP request error: ${res.statusCode}`));
+            reject({
+              message: `HTTP request error: ${res.statusCode}`,
+              statusCode: res.statusCode,
+            });
           }
         });
     });
