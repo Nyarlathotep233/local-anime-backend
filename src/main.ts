@@ -9,5 +9,6 @@ async function bootstrap() {
   });
   app.useStaticAssets(join(__dirname, '..', 'public/dist'), { prefix: '' });
   await app.listen(3000);
+  console.log("web server: http://localhost:3000")
 }
 bootstrap();

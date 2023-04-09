@@ -7,81 +7,119 @@ const convert = require('xml-js');
 // local-anime-backend
 
 const AUTO_START = false;
+const qbtServer = {
+  host: 'http://192.168.123.2:8080',
+  username: 'admin',
+  password: 'adminadmin'
+}
 
-export const addRssUrl = async (rssUrl: string) => {
-  const qbt = await api.connect('http://127.0.0.1:8080', 'admin', 'adminadmin');
+enum STATUS {
+  Ready
+}
 
-  // 请求默认地址
-  let defaultSavePath = '';
-  try {
-    defaultSavePath = await qbt.defaultSavePath();
-    console.log('defaultSavePath: ', defaultSavePath);
-  } catch (error) {
-    console.log('请求默认地址 error: ', error);
-    return {
-      success: false,
-      errorInfo: error,
-    };
+class QbtInstance {
+  #status: STATUS
+  #version: string
+  qbt
+
+  constructor() {
+    console.log("qbt init");
+    this.init()
   }
 
-  // 新增RSS订阅
-  try {
-    const addFeed = await qbt.addFeed(rssUrl, '');
-    console.log('新增RSS订阅: ', addFeed);
-  } catch (error) {
-    console.log('新增RSS订阅 error: ', error);
-    return {
-      success: false,
-      errorInfo: error,
-    };
+  async init() {
+    this.qbt = await api.connect(qbtServer.host, qbtServer.username, qbtServer.password);
+
+    this.#version = await this.qbt.apiVersion()
+    this.#status = STATUS.Ready
+
+    const initInfo = {
+      version: this.#version
+    }
+    console.log('qbt initInfo: ', initInfo);
   }
 
-  // 获得RSS标题
-  let title = '';
-  try {
-    const { data } = await axios.get(rssUrl.replace('https', 'http'));
-    const rssJson = JSON.parse(convert.xml2json(data, { compact: true }));
-    // eslint-disable-next-line no-underscore-dangle
-    title = rssJson?.rss?.channel?.title?._text;
-  } catch (error) {
-    console.log('获得RSS标题 error: ', error);
-    return {
-      success: false,
-      errorInfo: error,
-    };
-  }
-  console.log('获得RSS标题: ', title);
+  async addRssUrl(rssUrl: string, config: { notContainRule: string }) {
 
-  // 新增自动下载规则
-  try {
-    const res = await qbt.setRule(
-      title,
+    if (this.#status !== STATUS.Ready || !this.qbt) {
+      return
+    }
 
-      JSON.stringify({
-        addPaused: null,
-        affectedFeeds: [rssUrl],
-        assignedCategory: '',
-        enabled: AUTO_START,
-        episodeFilter: '',
-        ignoreDays: 0,
-        lastMatch: '',
-        mustContain: '',
-        mustNotContain: '',
-        previouslyMatchedEpisodes: [],
-        savePath: `${defaultSavePath}/${title}`,
-        smartFilter: false,
-        torrentContentLayout: null,
-        useRegex: false,
-      }),
-    );
-    console.log(`新增自动下载规则: ${res.statusText} ${res.data}`);
-  } catch (error) {
-    console.log('新增自动下载规则 error: ', error);
-    return {
-      success: false,
-      errorInfo: error,
-    };
-  }
+    // 请求默认地址
+    let defaultSavePath = '';
+    try {
+      defaultSavePath = await this.qbt.defaultSavePath();
+      console.log('defaultSavePath: ', defaultSavePath);
+    } catch (error) {
+      console.log('请求默认地址 error: ', error);
+      return {
+        success: false,
+        errorInfo: error,
+      };
+    }
 
-  return { success: true };
-};
+    // 新增RSS订阅
+    try {
+      const addFeed = await this.qbt.addFeed(rssUrl, '');
+      console.log('新增RSS订阅: ', addFeed);
+    } catch (error) {
+      console.log('新增RSS订阅 error: ', error);
+      return {
+        success: false,
+        errorInfo: error,
+      };
+    }
+
+    // 获得RSS标题
+    let title = '';
+    try {
+      const { data } = await axios.get(rssUrl);
+      // 解析xml
+      const rssJson = JSON.parse(convert.xml2json(data, { compact: true }));
+      // eslint-disable-next-line no-underscore-dangle
+      title = (rssJson?.rss?.channel?.title?._text)?.replace("Mikan Project - ", '');
+    } catch (error) {
+      console.log('获得RSS标题 error: ', error);
+      return {
+        success: false,
+        errorInfo: error,
+      };
+    }
+    console.log('获得RSS标题: ', title);
+
+    // 新增自动下载规则
+    try {
+      const res = await this.qbt.setRule(
+        title,
+
+        JSON.stringify({
+          addPaused: null,
+          affectedFeeds: [rssUrl],
+          assignedCategory: '',
+          enabled: AUTO_START,
+          episodeFilter: '',
+          ignoreDays: 0,
+          lastMatch: '',
+          mustContain: '',
+          mustNotContain: config.notContainRule,
+          previouslyMatchedEpisodes: [],
+          savePath: `${defaultSavePath}/${title}`,
+          smartFilter: false,
+          torrentContentLayout: null,
+          useRegex: false,
+        }),
+      );
+      console.log(`新增自动下载规则: ${res.statusText} ${res.data}`);
+    } catch (error) {
+      console.log('新增自动下载规则 error: ', error);
+      return {
+        success: false,
+        errorInfo: error,
+      };
+    }
+
+    return { success: true };
+  };
+}
+
+export default new QbtInstance()
