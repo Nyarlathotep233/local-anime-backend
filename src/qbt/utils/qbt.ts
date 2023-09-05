@@ -1655,6 +1655,7 @@ function performRequestAxios(opt, cookie, path, parameters) {
     baseURL: opt.baseURL,
     headers: {
       'Content-Type': 'application/x-www-form-urlencoded',
+      Cookie: cookie, // 用来通过身份验证
     },
   });
 }
