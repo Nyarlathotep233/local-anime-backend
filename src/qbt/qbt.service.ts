@@ -2,27 +2,36 @@
 /* eslint-disable no-console */
 import axios from 'axios';
 import api from './utils/qbt';
-let path = require('path');
+
+const path = require('path');
 const convert = require('xml-js');
 
 // local-anime-backend
 
+interface ServerConfig {
+  host: string;
+  username: string;
+  password: string;
+}
+
 const AUTO_START = false;
 // TODO 从请求中传
-const qbtServer = {
-  host: 'http://192.168.123.2:8080',
-  // host: 'http://localhost:8080/',
+const defaultServerConfig: ServerConfig = {
+  // host: 'http://192.168.123.2:8080',
+  host: 'http://localhost:8080/',
   username: 'admin',
   password: 'adminadmin',
 };
 
 enum STATUS {
-  Ready,
+  Ready = 'READY',
+  UNREADY = 'UNREADY',
 }
 
 class QbtInstance {
-  #status: STATUS;
+  #status: STATUS = STATUS.UNREADY;
   #version: string;
+  #serverInfo: ServerConfig = defaultServerConfig;
   qbt;
 
   constructor() {
@@ -31,22 +40,56 @@ class QbtInstance {
   }
 
   async init() {
-    this.qbt = await api.connect(
-      qbtServer.host,
-      qbtServer.username,
-      qbtServer.password,
-    );
+    await this.initConnect();
 
-    this.#version = await this.qbt.apiVersion();
-    this.#status = STATUS.Ready;
+    return true;
+  }
 
-    const initInfo = {
-      version: this.#version,
+  async setConfig({ serverInfo }: { serverInfo: ServerConfig }) {
+    this.#serverInfo = serverInfo;
+    console.log('setConfig: ');
+
+    return await this.init();
+  }
+
+  async initConnect() {
+    try {
+      console.log('this.#serverInfo: ', this.#serverInfo);
+      this.qbt = await api.connect(
+        this.#serverInfo.host,
+        this.#serverInfo.username,
+        this.#serverInfo.password,
+      );
+
+      this.#version = await this.qbt.apiVersion();
+      this.#status = STATUS.Ready;
+
+      console.log('qbt initInfo: ', this.getInfo());
+    } catch (error) {
+      console.log('error: ', error);
+    }
+  }
+
+  getStatus() {
+    return this.#status;
+  }
+
+  getVersion() {
+    return this.#version;
+  }
+
+  getInfo() {
+    return { status: this.getStatus(), version: this.getVersion() };
+  }
+
+  getConfig() {
+    return {
+      serverInfo: this.#serverInfo,
     };
-    console.log('qbt initInfo: ', initInfo);
   }
 
   async addRssUrl(rssUrl: string, config: { notContainRule: string }) {
+    console.log('addRssUrl: ');
     if (this.#status !== STATUS.Ready || !this.qbt) {
       return;
     }
