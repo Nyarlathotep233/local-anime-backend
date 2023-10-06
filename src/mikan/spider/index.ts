@@ -1,6 +1,4 @@
-import { test } from './puppeteer';
-
 export function getHomePageInfo() {
-  test();
+  // test();
   console.log('getHomePageInfo: ');
 }

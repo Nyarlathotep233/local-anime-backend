@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 /* eslint-disable no-console */
 import axios from 'axios';
+import defaultConfig from './defaultConfig';
 import api from './utils/qbt';
 
 const path = require('path');
@@ -12,27 +13,29 @@ interface ServerConfig {
   host: string;
   username: string;
   password: string;
+  defaultDownLoadPath: String
 }
 
 const AUTO_START = false;
 // TODO 从请求中传
 const defaultServerConfig: ServerConfig = {
-  // host: 'http://192.168.123.2:8080',
-  host: 'http://localhost:8080/',
+  host: 'http://192.168.123.2:8080',
   username: 'admin',
   password: 'adminadmin',
+  defaultDownLoadPath: '/mnt/usb2_3-1/video/tv/'
 };
 
 enum STATUS {
   Ready = 'READY',
+  Failed = 'FAILED',
   UNREADY = 'UNREADY',
 }
 
 class QbtInstance {
   #status: STATUS = STATUS.UNREADY;
   #version: string;
-  #serverInfo: ServerConfig = defaultServerConfig;
-  qbt;
+  #serverConfig: ServerConfig = defaultServerConfig;
+  qbt: any;
 
   constructor() {
     console.log('qbt init');
@@ -45,29 +48,48 @@ class QbtInstance {
     return true;
   }
 
-  async setConfig({ serverInfo }: { serverInfo: ServerConfig }) {
-    this.#serverInfo = serverInfo;
-    console.log('setConfig: ');
+  async setServerConfig({ serverInfo }: { serverInfo: ServerConfig }) {
+    this.#serverConfig = { ...this.#serverConfig, ...serverInfo };
+    console.log('setServerConfig: ');
 
     return await this.init();
   }
 
+  async setReadyStatus() {
+    console.log('setReadyStatus: ');
+    this.#version = await this.qbt.apiVersion();
+    this.#status = STATUS.Ready;
+  }
+
+  async setFailedStatus() {
+    console.log('setFailedStatus: ');
+    this.#version = null;
+    this.#status = STATUS.Failed;
+  }
+
   async initConnect() {
+    console.log('this.#serverConfig: ', this.#serverConfig);
+    const res = await this.qbt?.shutdown?.()
+    this.qbt = null
+    console.log('shutdown: ', res);
+
     try {
-      console.log('this.#serverInfo: ', this.#serverInfo);
       this.qbt = await api.connect(
-        this.#serverInfo.host,
-        this.#serverInfo.username,
-        this.#serverInfo.password,
+        this.#serverConfig.host,
+        this.#serverConfig.username,
+        this.#serverConfig.password,
       );
-
-      this.#version = await this.qbt.apiVersion();
-      this.#status = STATUS.Ready;
-
-      console.log('qbt initInfo: ', this.getInfo());
     } catch (error) {
       console.log('error: ', error);
     }
+
+    if (!this.qbt) {
+      await this.setFailedStatus()
+    } else {
+      await this.setReadyStatus()
+    }
+
+    console.log('qbt initInfo: ', this.getInfo());
   }
 
   getStatus() {
@@ -82,18 +104,13 @@ class QbtInstance {
     return { status: this.getStatus(), version: this.getVersion() };
   }
 
-  getConfig() {
+  getQbtServerConfig() {
     return {
-      serverInfo: this.#serverInfo,
+      serverInfo: this.#serverConfig,
     };
   }
 
-  async addRssUrl(rssUrl: string, config: { notContainRule: string }) {
-    console.log('addRssUrl: ');
-    if (this.#status !== STATUS.Ready || !this.qbt) {
-      return;
-    }
-
+  async getDefaultPath() {
     // 请求默认地址
     let defaultSavePath = '';
     try {
@@ -101,10 +118,17 @@ class QbtInstance {
       console.log('defaultSavePath: ', defaultSavePath);
     } catch (error) {
       console.log('请求默认地址 error: ', error);
-      return {
-        success: false,
-        errorInfo: error,
-      };
+      return defaultConfig.defaultDownLoadPath
+    }
+
+    return defaultSavePath
+  }
+
+  async addRssUrl(rssUrl: string, config: { notContainRule: string, downLoadPath: String }) {
+    console.log('addRssUrl: ');
+    const { downLoadPath, notContainRule } = config
+    if (this.#status !== STATUS.Ready || !this.qbt) {
+      return;
     }
 
     // 获得RSS标题
@@ -128,11 +152,9 @@ class QbtInstance {
     console.log('获得RSS标题: ', title);
 
     const newPath = path
-      .join(defaultSavePath, `./${title}`)
+      .join(downLoadPath || this.#serverConfig.defaultDownLoadPath || await this.getDefaultPath(), `./${title}`)
       .replace(/\\/g, '/');
-    console.log('newPath: ', newPath);
-
-    // return;
+    console.log('下载地址: ', newPath);
 
     // 新增RSS订阅
     try {
@@ -140,10 +162,10 @@ class QbtInstance {
       console.log('新增RSS订阅: ', addFeed);
     } catch (error) {
       console.log('新增RSS订阅 error: ', error);
-      return {
-        success: false,
-        errorInfo: error,
-      };
+      // return {
+      //   success: false,
+      //   errorInfo: error,
+      // };
     }
 
     // 新增自动下载规则
@@ -160,7 +182,7 @@ class QbtInstance {
           ignoreDays: 0,
           lastMatch: '',
           mustContain: '',
-          mustNotContain: config.notContainRule,
+          mustNotContain: notContainRule,
           previouslyMatchedEpisodes: [],
           // savePath: `${defaultSavePath}/${title}`,
           savePath: newPath,

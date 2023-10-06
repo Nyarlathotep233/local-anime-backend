@@ -1,6 +1,13 @@
 import axios from 'axios';
 import { Request } from 'express';
-import { Controller, Get, Post, Req } from '@nestjs/common';
+
+import {
+  Controller,
+  Get,
+  Post,
+  Req,
+} from '@nestjs/common';
+
 import defaultConfig from './defaultConfig';
 import qbt from './qbt.service';
 
@@ -12,21 +19,22 @@ export class QbtController {
   async handleAddRssUrl(
     @Req() request: Request,
   ): Promise<{ success: boolean; errorInfo?: any }> {
-    const { rssUrl, notContainRule } = request?.body;
+    const { rssUrl, notContainRule, downLoadPath } = request?.body;
     // https://mikanani.me/RSS/Bangumi?bangumiId=2902&subgroupid=583
     return await qbt.addRssUrl(rssUrl, {
       notContainRule: notContainRule || defaultConfig.defaultNotContainRule,
+      downLoadPath: downLoadPath
     });
   }
 
-  @Post('setConfig')
-  async handleSetConfig(@Req() request: Request): Promise<any> {
+  @Post('setServerConfig')
+  async handlesetServerConfig(@Req() request: Request): Promise<any> {
     try {
       const { setting } = request?.body;
 
       return {
-        success: await qbt.setConfig(setting),
-        detail: qbt.getConfig(),
+        success: await qbt.setServerConfig(setting),
+        detail: qbt.getQbtServerConfig(),
       };
     } catch (error) {
       return {
@@ -64,13 +72,18 @@ export class QbtController {
     }
   }
 
-  @Get('getQbtInfo')
-  async handleGetQbtInfo(@Req() request: Request): Promise<any> {
+  @Get('getQbtStatus')
+  async handlegetQbtStatus(@Req() request: Request): Promise<any> {
     return qbt.getInfo();
   }
 
-  @Get('getQbtConfig')
+  @Get('getQbtServerConfig')
   async handleGetQbtConfig(@Req() request: Request): Promise<any> {
-    return qbt.getConfig();
+    return qbt.getQbtServerConfig();
+  }
+
+  @Get('getDefaultConfig')
+  async handleGetDefaultConfig(@Req() request: Request): Promise<any> {
+    return { ...defaultConfig, defaultDownLoadPath: qbt.getQbtServerConfig().serverInfo.defaultDownLoadPath || defaultConfig.defaultDownLoadPath };
   }
 }
