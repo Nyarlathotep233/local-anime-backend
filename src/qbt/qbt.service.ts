@@ -69,9 +69,9 @@ class QbtInstance {
 
   async initConnect() {
     console.log('this.#serverConfig: ', this.#serverConfig);
-    const res = await this.qbt?.shutdown?.()
-    this.qbt = null
-    console.log('shutdown: ', res);
+    // const res = await this.qbt?.shutdown?.()
+    // this.qbt = null
+    // console.log('shutdown: ', res);
 
     try {
       this.qbt = await api.connect(
