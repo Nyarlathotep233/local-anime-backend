@@ -28,11 +28,9 @@
     "@nestjs/platform-express": "^9.0.0",
     "axios": "^1.3.4",
     "node-windows": "^1.0.0-beta.6",
-    "puppeteer": "^21.1.1",
     "qbittorrent-api-v2": "^1.2.2",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.2.0",
-    "x-crawl": "^8.1.1",
     "xml-js": "^1.6.11"
   },
   "devDependencies": {

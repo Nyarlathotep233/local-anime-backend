@@ -1610,6 +1610,7 @@ function performRequest(opt, cookie, path, parameters): any {
       Cookie: cookie,
     },
   };
+  console.log('options: ', options);
 
   return new Promise((resolve, reject) => {
     const req = protocol[options.protocol].request(options, (res) => {

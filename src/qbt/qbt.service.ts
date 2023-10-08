@@ -13,7 +13,7 @@ interface ServerConfig {
   host: string;
   username: string;
   password: string;
-  defaultDownLoadPath: String
+  defaultDownLoadPath: string;
 }
 
 const AUTO_START = false;
@@ -22,7 +22,7 @@ const defaultServerConfig: ServerConfig = {
   host: 'http://192.168.123.2:8080',
   username: 'admin',
   password: 'adminadmin',
-  defaultDownLoadPath: '/mnt/usb2_3-1/video/tv/'
+  defaultDownLoadPath: '/mnt/usb2_3-1/video/tv/',
 };
 
 enum STATUS {
@@ -84,9 +84,9 @@ class QbtInstance {
     }
 
     if (!this.qbt) {
-      await this.setFailedStatus()
+      await this.setFailedStatus();
     } else {
-      await this.setReadyStatus()
+      await this.setReadyStatus();
     }
 
     console.log('qbt initInfo: ', this.getInfo());
@@ -118,15 +118,18 @@ class QbtInstance {
       console.log('defaultSavePath: ', defaultSavePath);
     } catch (error) {
       console.log('请求默认地址 error: ', error);
-      return defaultConfig.defaultDownLoadPath
+      return defaultConfig.defaultDownLoadPath;
     }
 
-    return defaultSavePath
+    return defaultSavePath;
   }
 
-  async addRssUrl(rssUrl: string, config: { notContainRule: string, downLoadPath: String }) {
+  async addRssUrl(
+    rssUrl: string,
+    config: { notContainRule: string; downLoadPath: string },
+  ) {
     console.log('addRssUrl: ');
-    const { downLoadPath, notContainRule } = config
+    const { downLoadPath, notContainRule } = config;
     if (this.#status !== STATUS.Ready || !this.qbt) {
       return;
     }
@@ -152,7 +155,12 @@ class QbtInstance {
     console.log('获得RSS标题: ', title);
 
     const newPath = path
-      .join(downLoadPath || this.#serverConfig.defaultDownLoadPath || await this.getDefaultPath(), `./${title}`)
+      .join(
+        downLoadPath ||
+          this.#serverConfig.defaultDownLoadPath ||
+          (await this.getDefaultPath()),
+        `./${title}`,
+      )
       .replace(/\\/g, '/');
     console.log('下载地址: ', newPath);
 
