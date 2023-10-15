@@ -58,6 +58,12 @@ $ npm run test:e2e
 $ npm run test:cov
 ```
 
+## Docker
+
+```bash
+docker build -t nyarlathotep233/local-anime-backend:[version] .
+```
+
 ## 前端资源路径
 /public/dist
 
